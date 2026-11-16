@@ -1,0 +1,9 @@
+services:
+  progree-web:
+    build: .
+    container_name: progree-web-container
+    ports:
+      - "5000:8080"
+    env_file:
+      - .env
+    restart: unless-stopped

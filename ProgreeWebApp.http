@@ -1,0 +1,6 @@
+@ProgreeWebApp_HostAddress = http://localhost:5144
+
+GET {{ProgreeWebApp_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
