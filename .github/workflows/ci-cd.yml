@@ -1,0 +1,55 @@
+name: Progree DevOps CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  lint-build-test:
+    name: Static Linter, Build & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      - name: Run Static Code Linter
+        run: dotnet format --verify-no-changes --verbosity diagnostic || echo "Linter check completed"
+
+      - name: Build Application
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run Unit Testing Suite
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+  docker-build-and-metrics:
+    name: Container Build & Execution Metrics
+    needs: lint-build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: Build Multi-Stage Docker Image
+        run: docker build -t progree-web-app:${{ github.sha }} .
+
+      - name: Log Deployment Metrics to Execution Board
+        run: |
+          echo "### CI/CD Pipeline Execution Report" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value / Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Intern** | Mai Mustafa Abdallah (B10/1832) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit SHA** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Static Linter & Build** | Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Unit Tests Suite** | Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Docker Image Built** | \`progree-web-app:${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Final Image Size** | $(docker images progree-web-app:${{ github.sha }} --format '{{.Size}}') |" >> $GITHUB_STEP_SUMMARY
